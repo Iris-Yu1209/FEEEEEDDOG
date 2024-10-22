@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FEEEEED MEEEEE!!!</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        body {
+            background-color: #FFF8E1; /* Light Yellow */
+            background-image: url('paw.png'); /* Background Image */
+            background-size: cover; /* Cover the entire background */
+            background-repeat: no-repeat; /* Prevent repetition */
+            background-position: center; /* Center the background */
+            color: #FF4081; /* Light Pink */
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        h1 {
+            font-size: 48px; /* Larger font size */
+            color: #FF4081; /* Light Pink */
+        }
+        #energy {
+            font-size: 22px; /* Slightly larger font size */
+            color: #FF4081; /* Light Pink */
+            padding: 10px 20px; /* Padding for the container */
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+            border-radius: 15px; /* Rounded corners */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Soft shadow to enhance visibility */
+            margin-bottom: 20px;
+        }
+        #dog-image {
+            width: 200px;
+            height: 200px;
+            margin: auto;
+        }
+        #button-container {
+            position: absolute;
+            bottom: 20px;
+            text-align: center;
+            width: 100%;
+        }
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #FF80AB; /* Light Pink */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #FF4081; /* Darker Pink */
+        }
+    </style>
+</head>
+<body>
+    <h1>FEEEEED MEEEEE!!!</h1>
+    <div id="energy">Energy Points: <span id="energy-points">...</span></div>
+    <img id="dog-image" src="dog.png" alt="Dog Image">
+    <div id="button-container">
+        <button id="feed-dog" disabled>Feed the Dog</button>
+    </div>
+
+    <script>
+        let provider, signer, contract;
+        const contractAddress = "0x770b28f9eA8e038E1765912BECbEc107320177bf";
+        const abi = [
+            {"inputs": [], "name": "feedDog", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+            {"inputs": [], "name": "getEnergyPoints", "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"}
+        ];
+
+        async function init() {
+            try {
+                if (window.ethereum) {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = await provider.getSigner();
+                    contract = new ethers.Contract(contractAddress, abi, signer);
+                    document.getElementById("feed-dog").disabled = false;
+                    await updateEnergyPoints();
+                } else {
+                    alert("Please install MetaMask!");
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+            }
+        }
+
+        async function updateEnergyPoints() {
+            try {
+                let points = await contract.getEnergyPoints();
+                points = points.toString();
+                document.getElementById("energy-points").textContent = points.toString();
+                updateDogImageSize(points);
+            } catch (error) {
+                console.error("Error fetching energy points:", error);
+                document.getElementById("energy-points").textContent = "Error";
+            }
+        }
+
+        async function feedDog() {
+            try {
+                const tx = await contract.feedDog();
+                await tx.wait();
+                alert("Dog fed successfully!");
+                await updateEnergyPoints();
+            } catch (error) {
+                console.error("Error feeding the dog:", error);
+            }
+        }
+
+        function updateDogImageSize(points) {
+            const size = 200 + (points - 15) * 10; // Assuming 15 is the starting point
+            const dogImage = document.getElementById("dog-image");
+            dogImage.style.width = `${size}px`;
+            dogImage.style.height = `${size}px`;
+        }
+
+        document.getElementById("feed-dog").addEventListener("click", feedDog);
+        window.onload = init;
+    </script>
+</body>
+</html>
